@@ -2,7 +2,7 @@
 //webgazer.setGazeListener(observe).begin();
 
 
-var observe = async function(data, clock) {
+var observe2 = async function(data, clock) {
     //console.log("observer");
 
     if(data){
@@ -49,3 +49,73 @@ function sleep(milliseconds) {
 function setCntLoadedData(){
     document.getElementById('status').innerHTML = cntLoadedData;
 }
+
+var lastViewDown = 0
+var numberOfViews = 0
+var firstRecognisedCrime = 0
+var newCrime = true;
+var observe = async function(data, clock) {
+    //console.log("observer");
+
+    if(data){
+
+        if(data.y > 600){
+            if(lastViewDown == 0){
+                lastViewDown = clock;
+            }else if(clock - lastViewDown > 500){
+                if(newCrime){
+                    numberOfViews++
+                    newCrime = false;
+                }
+
+                if(firstRecognisedCrime == 0){
+                    firstRecognisedCrime = clock;
+                } 
+
+                if(clock - lastViewDown > 5000){
+                    //Warnstufe
+                    console.log("WARNSTUFE")
+                    console.log("länger als 5 sec nach unten")
+                    document.body.style.backgroundColor = "orange";
+                    beep();
+                }else if(numberOfViews >= 3){
+                    //Warnstufe
+                    console.log("WARNSTUFE")
+                    console.log("Öfter als 3 mal nach unten")
+                    document.body.style.backgroundColor = "orange";
+                    firstRecognisedCrime = clock;
+                    beep();
+                } else {
+                    //Vorwarnstufe  
+                    document.body.style.backgroundColor = "yellow"; 
+                    console.log("VORWARNSTUFE")
+                    console.log("länger als 0,5 sec nach unten")
+                }           
+
+            }else{
+                if(clock - lastViewDown < 500){ 
+                    console.log("noch zu kurz nach unten")
+                }else{
+                    document.body.style.backgroundColor = "pink";
+                }
+            }
+            
+        }else{
+            lastViewDown = 0 ;
+            newCrime = true;
+
+            if(clock - firstRecognisedCrime > 10000){
+                firstRecognisedCrime = 0;
+                numberOfViews = 0;
+                console.log("Zurücksetzten")
+            }      
+
+            document.body.style.backgroundColor = "green";
+        }    
+    }else{
+        
+    }
+
+    console.log(`Data: X ${Math.round(data.x)} Y ${Math.round(data.y)} clock ${Math.round(clock)} lastViewDown ${Math.round(lastViewDown)} lookDownDuration ${Math.round(clock - lastViewDown)} numberOfViews ${numberOfViews} firstRecognisedCrime ${Math.round(firstRecognisedCrime)}`);
+}
+
