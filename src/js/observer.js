@@ -50,16 +50,30 @@ function setCntLoadedData(){
     document.getElementById('status').innerHTML = cntLoadedData;
 }
 
+function getUrlParam(n, d){
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    let v = urlParams.get(n)
+    if (v){
+        return v;
+    }else{
+        return d;
+    }
+}
+
 var lastViewDown = 0
 var numberOfViews = 0
 var firstRecognisedCrime = 0
 var newCrime = true;
+var warningLevel = 0
+var upDownBorder = getUrlParam("upDownBorder", 600);
+
 var observe = async function(data, clock) {
     //console.log("observer");
 
     if(data){
 
-        if(data.y > 600){
+        if(data.y > upDownBorder){
             if(lastViewDown == 0){
                 lastViewDown = clock;
             }else if(clock - lastViewDown > 500){
@@ -72,21 +86,38 @@ var observe = async function(data, clock) {
                     firstRecognisedCrime = clock;
                 } 
 
-                if(clock - lastViewDown > 5000){
+                if(warningLevel >= 2 && (clock - lastViewDown > 5000 || numberOfViews >= 5)){
+                    warningLevel = 3 ;
+                    //ALARMSTUFE
+                    console.log("ALARMSTUFE")
+                    console.log("länger als 5 sec nach unten auf Vorwarnstufe")
+                    document.body.style.backgroundColor = "red";
+                    beep();
+                    beep();
+                    beep();
+                    beep();
+                    beep();
+                }
+
+                else if(clock - lastViewDown > 5000 && warningLevel <= 2){
+                    warningLevel = 2 ;
                     //Warnstufe
                     console.log("WARNSTUFE")
                     console.log("länger als 5 sec nach unten")
                     document.body.style.backgroundColor = "orange";
                     beep();
-                }else if(numberOfViews >= 3){
+                    
+                }else if(numberOfViews >= 3 && warningLevel <= 2){
                     //Warnstufe
+                    warningLevel = 2 ;
                     console.log("WARNSTUFE")
                     console.log("Öfter als 3 mal nach unten")
                     document.body.style.backgroundColor = "orange";
                     firstRecognisedCrime = clock;
                     beep();
                 } else {
-                    //Vorwarnstufe  
+                    //Vorwarnstufe 
+                    warningLevel = 1 ; 
                     document.body.style.backgroundColor = "yellow"; 
                     console.log("VORWARNSTUFE")
                     console.log("länger als 0,5 sec nach unten")
@@ -108,14 +139,27 @@ var observe = async function(data, clock) {
                 firstRecognisedCrime = 0;
                 numberOfViews = 0;
                 console.log("Zurücksetzten")
-            }      
+                if(warningLevel > 1){
+                    warningLevel = 1 ;
+                }
+                else{
+                    warningLevel = 0 ;
+                }
+            } 
+
 
             document.body.style.backgroundColor = "green";
         }    
+        document.getElementById('cordX').innerHTML = Math.round(data.x);
+        document.getElementById('cordY').innerHTML = Math.round(data.y)
+        document.getElementById('warningLevel').innerHTML = Math.round(warningLevel);
+        document.getElementById('upDownBorder').innerHTML = Math.round(upDownBorder);
+        
     }else{
         
     }
 
-    console.log(`Data: X ${Math.round(data.x)} Y ${Math.round(data.y)} clock ${Math.round(clock)} lastViewDown ${Math.round(lastViewDown)} lookDownDuration ${Math.round(clock - lastViewDown)} numberOfViews ${numberOfViews} firstRecognisedCrime ${Math.round(firstRecognisedCrime)}`);
+    console.log(`Data: X ${Math.round(data.x)} Y ${Math.round(data.y)} clock ${Math.round(clock)} lastViewDown ${Math.round(lastViewDown)} lookDownDuration ${Math.round(clock - lastViewDown)} numberOfViews ${numberOfViews} firstRecognisedCrime ${Math.round(firstRecognisedCrime)} warningLevel ${warningLevel}`);
 }
+
 
